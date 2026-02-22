@@ -4,6 +4,10 @@ using System.Text.Json;
 
 namespace RepoIndexer.Services;
 
+/// <summary>
+/// Orchestrates the indexing of a repository by collecting all .cs files,
+/// analyzing them with Roslyn, and writing the result to a repo.json file.
+/// </summary>
 public class RepoIndexingService(RoslynAnalyzerService analyzer, ILogger<RepoIndexingService> logger)
 {
     private static readonly string IndexFolder = ".repo-indexer";
@@ -19,6 +23,10 @@ public class RepoIndexingService(RoslynAnalyzerService analyzer, ILogger<RepoInd
         WriteIndented = true
     };
 
+    /// <summary>
+    /// Indexes the specified repository and generates a repo.json file.
+    /// </summary>
+    /// <param name="repoRoot">The root directory of the repository to index.</param>
     public void IndexRepo(string repoRoot)
     {
         logger.LogInformation("Indexing repo: {Repo}", repoRoot);

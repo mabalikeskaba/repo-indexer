@@ -4,9 +4,14 @@ using System.Collections.Concurrent;
 
 namespace RepoIndexer.Services;
 
+/// <summary>
+/// Background service that monitors the root folder for .cs file changes
+/// and triggers debounced re-indexing of the affected repository.
+/// </summary>
 public class RepoWatcherService(
     WatcherOptions options,
     RepoIndexingService indexingService,
+    RepoDiscoveryService discoveryService,
     ILogger<RepoWatcherService> logger) : BackgroundService
 {
     // Debounce delay: wait this long after the last change before re-indexing
@@ -15,10 +20,13 @@ public class RepoWatcherService(
     // Maps repoRoot -> active debounce CancellationTokenSource
     private readonly ConcurrentDictionary<string, CancellationTokenSource> _debounceMap = new();
 
+    /// <summary>
+    /// Performs the initial full indexing and activates the FileWatcher for ongoing change detection.
+    /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         // Initial full indexing of all repos found at startup
-        IndexAllRepos();
+        discoveryService.DiscoverAndIndex(options.RootFolder);
 
         using var watcher = new FileSystemWatcher(options.RootFolder)
         {
@@ -73,80 +81,9 @@ public class RepoWatcherService(
         }, cts.Token);
     }
 
-    private void IndexAllRepos()
-    {
-        Console.WriteLine("Scanning for repositories...");
-        logger.LogInformation("Starting initial indexing of: {Root}", options.RootFolder);
-
-        var repos = FindAllReposRecursive(options.RootFolder);
-
-        if (repos.Count == 0)
-        {
-            Console.WriteLine("No repositories found.");
-            logger.LogWarning("No repositories found in: {Root}", options.RootFolder);
-            return;
-        }
-
-        Console.WriteLine($"Found {repos.Count} repository/repositories. Starting indexing...\n");
-
-        for (int i = 0; i < repos.Count; i++)
-        {
-            var repo = repos[i];
-            var repoName = Path.GetFileName(repo);
-            int progress = (int)Math.Round((i + 1) / (double)repos.Count * 100);
-            int filled = progress / 5;
-
-            var bar = $"[{new string('#', filled)}{new string('-', 20 - filled)}] {progress,3}%";
-            Console.Write($"\r  {bar}  ({i + 1}/{repos.Count}) {repoName,-40}");
-
-            indexingService.IndexRepo(repo);
-        }
-
-        Console.WriteLine($"\n\nInitial indexing complete. {repos.Count} repo(s) indexed.");
-        logger.LogInformation("Initial indexing complete. {Count} repo(s) indexed.", repos.Count);
-    }
-
-    private static readonly HashSet<string> ExcludedScanFolders = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "bin", "obj", "packages", "node_modules", ".git", ".repo-indexer"
-    };
-
-    private static List<string> FindAllReposRecursive(string rootFolder)
-    {
-        var repos = new List<string>();
-        SearchDir(rootFolder, repos);
-        return repos;
-    }
-
-    private static void SearchDir(string dir, List<string> repos)
-    {
-        // If this directory is a repo, add it and don't recurse further into it
-        if (Directory.Exists(Path.Combine(dir, ".git")))
-        {
-            repos.Add(dir);
-            return;
-        }
-
-        try
-        {
-            foreach (var sub in Directory.EnumerateDirectories(dir))
-            {
-                var name = Path.GetFileName(sub);
-                if (ExcludedScanFolders.Contains(name))
-                    continue;
-
-                SearchDir(sub, repos);
-            }
-        }
-        catch (UnauthorizedAccessException)
-        {
-            // Skip directories we cannot access
-        }
-    }
-
     /// <summary>
-    /// Walks up from the given file path to find the nearest directory
-    /// containing a .git folder, without leaving the root folder.
+    /// Walks up the directory tree from a changed file to find the nearest repository root containing a .git folder.
+    /// Returns null if no repository root is found within the watched root folder.
     /// </summary>
     private string? FindRepoRoot(string filePath)
     {

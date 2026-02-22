@@ -30,6 +30,7 @@ var host = Host.CreateDefaultBuilder(args)
     {
         services.AddSingleton<RoslynAnalyzerService>();
         services.AddSingleton<RepoIndexingService>();
+        services.AddSingleton<RepoDiscoveryService>();
         services.AddSingleton(new WatcherOptions { RootFolder = rootFolder });
         services.AddHostedService<RepoWatcherService>();
     })

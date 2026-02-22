@@ -7,8 +7,17 @@ using System.Text.RegularExpressions;
 
 namespace RepoIndexer.Services;
 
+/// <summary>
+/// Service for analyzing C# files using Roslyn to extract classes, methods, and summaries.
+/// </summary>
 public class RoslynAnalyzerService(ILogger<RoslynAnalyzerService> logger)
 {
+    /// <summary>
+    /// Parses a C# file using Roslyn and extracts all classes with their summary and methods.
+    /// Returns null if the file contains no classes or cannot be parsed.
+    /// </summary>
+    /// <param name="filePath">The absolute path to the .cs file to analyze.</param>
+    /// <param name="repoRoot">The repository root used to compute the relative file path.</param>
     public FileIndex? AnalyzeFile(string filePath, string repoRoot)
     {
         try
