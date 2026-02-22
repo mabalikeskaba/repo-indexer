@@ -1,0 +1,6 @@
+**/bin/
+**/obj/
+**/debug/
+**/.git/
+**/.repo-indexer/
+docs/

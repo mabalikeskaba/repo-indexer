@@ -8,6 +8,7 @@ Das Projekt "repo-indexer" soll einen Service bereitstellen, der in einem Docker
 
 - **Sprache / Framework:** .NET C#
 - **Laufzeitumgebung:** Docker Container
+- **Analyse-Tool:** Roslyn (für die Analyse der `.cs`-Dateien)
 
 ## Funktionsweise
 
