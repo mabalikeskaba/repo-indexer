@@ -59,6 +59,8 @@ public class RepoWatcherService(
             return;
         }
 
+        logger.LogInformation("Change detected in {Repo}, scheduling re-index...", Path.GetFileName(repoRoot));
+
         // Cancel any existing debounce for this repo and start a new one
         if (_debounceMap.TryRemove(repoRoot, out var existingCts))
             existingCts.Cancel();

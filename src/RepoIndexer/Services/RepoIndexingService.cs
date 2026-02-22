@@ -29,7 +29,7 @@ public class RepoIndexingService(RoslynAnalyzerService analyzer, ILogger<RepoInd
     /// <param name="repoRoot">The root directory of the repository to index.</param>
     public void IndexRepo(string repoRoot)
     {
-        logger.LogInformation("Indexing repo: {Repo}", repoRoot);
+        logger.LogDebug("Indexing repo: {Repo}", repoRoot);
 
         var files = Directory
             .EnumerateFiles(repoRoot, "*.cs", SearchOption.AllDirectories)
@@ -54,7 +54,7 @@ public class RepoIndexingService(RoslynAnalyzerService analyzer, ILogger<RepoInd
 
         WriteIndex(repoRoot, repoIndex);
 
-        logger.LogInformation(
+        logger.LogDebug(
             "Indexed {FileCount} files with {ClassCount} classes in {Repo}",
             fileIndexes.Count,
             fileIndexes.Sum(f => f.Classes.Count),
@@ -92,7 +92,7 @@ public class RepoIndexingService(RoslynAnalyzerService analyzer, ILogger<RepoInd
             var json = JsonSerializer.Serialize(index, JsonOptions);
             File.WriteAllText(outputPath, json);
 
-            logger.LogInformation("Written index to {Path}", outputPath);
+            logger.LogDebug("Written index to {Path}", outputPath);
         }
         catch (Exception ex)
         {

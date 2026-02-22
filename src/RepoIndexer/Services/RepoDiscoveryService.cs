@@ -37,16 +37,16 @@ public class RepoDiscoveryService(RepoIndexingService indexingService, ILogger<R
         {
             var repo = repos[i];
             var repoName = Path.GetFileName(repo);
-            int progress = (int)Math.Round((i + 1) / (double)repos.Count * 100);
-            int filled = progress / 5;
-
-            var bar = $"[{new string('#', filled)}{new string('-', 20 - filled)}] {progress,3}%";
-            Console.Write($"\r  {bar}  ({i + 1}/{repos.Count}) {repoName,-40}");
 
             indexingService.IndexRepo(repo);
+
+            int progress = (int)Math.Round((i + 1) / (double)repos.Count * 100);
+            int filled = progress / 5;
+            var bar = $"[{new string('#', filled)}{new string('-', 20 - filled)}] {progress,3}%";
+            Console.Write($"\r  {bar}  ({i + 1}/{repos.Count}) {repoName,-40}");
         }
 
-        Console.WriteLine($"\n\nInitial indexing complete. {repos.Count} repo(s) indexed.");
+        Console.WriteLine($"\nInitial indexing complete. {repos.Count} repo(s) indexed.");
         logger.LogInformation("Initial indexing complete. {Count} repo(s) indexed.", repos.Count);
     }
 
